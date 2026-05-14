@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import UPLOAD_DIR, OUTPUT_DIR, BASE_DIR, PRESETS, CAPTION_STYLES, GROQ_API_KEY, DEFAULT_PROVIDER
+from config import UPLOAD_DIR, OUTPUT_DIR, BASE_DIR, PRESETS, CAPTION_STYLES, GROQ_API_KEY, DEFAULT_PROVIDER, DEFAULT_CAPTION_STYLE
 from transcriber import transcribe
 from analyzer import analyze_transcript
 from clipper import create_clip, generate_thumbnail
@@ -52,8 +52,8 @@ async def upload_video(
     file: UploadFile = File(None),
     url: str = Form(None),
     provider: str = Form(None),
-    preset: str = Form('tiktok'),
-    caption_style: str = Form('viral'),
+    preset: str = Form('landscape'),
+    caption_style: str = Form('typography_motion'),
 ):
     """Accept video upload or URL and start processing pipeline"""
     # Use server-side API key and default provider
@@ -205,7 +205,7 @@ async def process_job(job_id):
                 None, create_clip,
                 job['video_path'], clip_info, transcript['words'],
                 output_path, i, progress_cb,
-                job.get('caption_style', 'tiktok'),
+                job.get('caption_style', DEFAULT_CAPTION_STYLE),
                 job.get('preset', 'tiktok')
             )
 
@@ -258,8 +258,8 @@ async def reclip(
     clip_index: int = Form(...),
     start_time: float = Form(...),
     end_time: float = Form(...),
-    caption_style: str = Form('viral'),
-    preset: str = Form('tiktok'),
+    caption_style: str = Form('typography_motion'),
+    preset: str = Form('landscape'),
 ):
     """Re-create a single clip with adjusted timing or style"""
     job = jobs.get(job_id)

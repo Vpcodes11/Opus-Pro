@@ -10,7 +10,7 @@ LLM_PROVIDERS = {
     },
     'groq': {
         'base_url': 'https://api.groq.com/openai/v1',
-        'model': 'llama-3.3-70b-versatile',
+        'model': 'llama-3.1-8b-instant', # More stable rate limits than 70b
     }
 }
 
@@ -65,46 +65,71 @@ def analyze_transcript(transcript_data, api_key, progress_callback=None, provide
     if progress_callback:
         progress_callback("Analyzing transcript for viral moments...", 58)
 
-    # Build timestamped transcript for the LLM
-    segments_text = "\n".join([
-        f"[{seg['start']:.1f}s - {seg['end']:.1f}s] {seg['text']}"
-        for seg in transcript_data['segments']
-    ])
+    # Group segments into chunks to avoid token limits
+    MAX_WORDS_PER_CHUNK = 1000  # approx 1300 tokens
+    chunks = []
+    current_chunk = []
+    current_word_count = 0
+    
+    for seg in transcript_data['segments']:
+        words_in_seg = len(seg.get('text', '').split())
+        if current_word_count + words_in_seg > MAX_WORDS_PER_CHUNK and current_chunk:
+            chunks.append(current_chunk)
+            current_chunk = [seg]
+            current_word_count = words_in_seg
+        else:
+            current_chunk.append(seg)
+            current_word_count += words_in_seg
+            
+    if current_chunk:
+        chunks.append(current_chunk)
 
-    last_end = transcript_data['segments'][-1]['end'] if transcript_data['segments'] else 0
-
-    user_prompt = f"""Here is the podcast transcript with timestamps:
+    all_clips = []
+    total_chunks = len(chunks)
+    
+    if progress_callback:
+        progress_callback(f"AI is finding viral moments across {total_chunks} parts...", 60)
+        
+    for i, chunk in enumerate(chunks):
+        segments_text = "\n".join([
+            f"[{seg['start']:.1f}s - {seg['end']:.1f}s] {seg['text']}"
+            for seg in chunk
+        ])
+        
+        user_prompt = f"""Here is a section of the podcast transcript with timestamps:
 
 {segments_text}
 
-Total duration: {last_end:.1f} seconds
-
-Identify the top 3-8 most viral-worthy moments. Each clip should be 30-90 seconds.
+Identify the top 1-3 most viral-worthy moments in this section. Each clip should be 30-90 seconds.
 Return ONLY valid JSON."""
 
+        create_kwargs = {
+            'model': config['model'],
+            'messages': [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ],
+            'temperature': 0.7,
+            'max_tokens': 1000,
+            'response_format': {"type": "json_object"}
+        }
+        
+        try:
+            response = client.chat.completions.create(**create_kwargs)
+            result = json.loads(response.choices[0].message.content)
+            all_clips.extend(result.get('clips', []))
+        except Exception as e:
+            print(f"Error analyzing chunk {i+1}: {e}")
+            
+        if progress_callback:
+            pct = 60 + int(((i + 1) / total_chunks) * 10)
+            progress_callback(f"Analyzed part {i+1} of {total_chunks}...", pct)
+
+    # Sort and take top ones
+    all_clips.sort(key=lambda x: x.get('virality_score', 0), reverse=True)
+    top_clips = all_clips[:8]
+
     if progress_callback:
-        progress_callback("AI is finding the best viral moments...", 62)
+        progress_callback(f"Found {len(top_clips)} viral moments!", 70)
 
-    create_kwargs = {
-        'model': config['model'],
-        'messages': [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt}
-        ],
-        'temperature': 0.7,
-    }
-
-    # JSON mode
-    create_kwargs['response_format'] = {"type": "json_object"}
-
-    response = client.chat.completions.create(**create_kwargs)
-
-    result = json.loads(response.choices[0].message.content)
-
-    clips = result.get('clips', [])
-    clips.sort(key=lambda x: x.get('virality_score', 0), reverse=True)
-
-    if progress_callback:
-        progress_callback(f"Found {len(clips)} viral moments!", 70)
-
-    return clips
+    return top_clips

@@ -22,12 +22,12 @@ PRESETS = {
     "landscape": {"width": 1920, "height": 1080, "label": "Landscape (16:9)"},
 }
 
-DEFAULT_PRESET = "tiktok"
-TARGET_WIDTH = 1080
-TARGET_HEIGHT = 1920  # 9:16 vertical
+DEFAULT_PRESET = "landscape"
+TARGET_WIDTH = 1920
+TARGET_HEIGHT = 1080  # 16:9 horizontal
 
 # Clip settings
-MIN_CLIP_DURATION = 15   # seconds
+MIN_CLIP_DURATION = 5   # seconds
 MAX_CLIP_DURATION = 90   # seconds
 MAX_CLIPS = 8
 
@@ -38,8 +38,8 @@ AUDIO_CHUNK_DURATION = 600  # 10 minutes per chunk
 # Caption styles
 CAPTION_STYLES = {
     "tiktok": {
-        "font": "Inter",
-        "fontsize": 82,
+        "font": "Montserrat ExtraBold",
+        "fontsize": 85,
         "primary_color": "&H00FFFFFF",
         "highlight_color": "&H0000FFFF", # Yellow
         "outline_color": "&H00000000",
@@ -48,7 +48,7 @@ CAPTION_STYLES = {
         "outline": 6,
         "shadow": 4,
         "alignment": 2,
-        "margin_v": 200,
+        "margin_v": 120, # Moved down from 576 to be below the video
     },
     "minimal": {
         "font": "Inter",
@@ -61,24 +61,23 @@ CAPTION_STYLES = {
         "outline": 4,
         "shadow": 2,
         "alignment": 2,
-        "margin_v": 220,
+        "margin_v": 120,
     },
     "viral": {
-        "font": "The Bold Font", # Requires installation
-        "fallback_font": "Arial Black",
-        "fontsize": 94,
-        "primary_color": "&H00FFFFFF",
-        "highlight_color": "&H0000D4FF", # Gold/Orange
+        "font": "Montserrat Black", # Opus Pro favorite
+        "fontsize": 110,
+        "primary_color": "&H0000D4FF", # Active: Gold
+        "highlight_color": "&H00FFFFFF", # Inactive: White
         "outline_color": "&H00000000",
         "back_color": "&H00000000",
         "bold": True,
-        "outline": 8,
-        "shadow": 6,
+        "outline": 10,
+        "shadow": 0,
         "alignment": 2,
-        "margin_v": 180,
+        "margin_v": 120,
     },
     "bold_impact": {
-        "font": "Montserrat ExtraBold", 
+        "font": "Montserrat Black", 
         "fontsize": 100,
         "primary_color": "&H00FFFFFF",
         "highlight_color": "&H000022FF", # Vibrant Red
@@ -88,7 +87,7 @@ CAPTION_STYLES = {
         "outline": 10,
         "shadow": 8,
         "alignment": 2,
-        "margin_v": 180,
+        "margin_v": 120,
     },
     "neon_pulse": {
         "font": "Outfit",
@@ -99,9 +98,9 @@ CAPTION_STYLES = {
         "back_color": "&H00000000",
         "bold": True,
         "outline": 6,
-        "shadow": 12, # Deep shadow for glow effect
+        "shadow": 12,
         "alignment": 2,
-        "margin_v": 200,
+        "margin_v": 120,
     },
     "karaoke": {
         "font": "Komika Axis",
@@ -114,7 +113,7 @@ CAPTION_STYLES = {
         "outline": 10,
         "shadow": 4,
         "alignment": 2,
-        "margin_v": 190,
+        "margin_v": 120,
     },
     "high_intensity": {
         "font": "The Bold Font",
@@ -127,7 +126,7 @@ CAPTION_STYLES = {
         "outline": 12,
         "shadow": 0,
         "alignment": 2,
-        "margin_v": 200,
+        "margin_v": 120,
     },
     "minimal_modern": {
         "font": "Inter",
@@ -140,34 +139,34 @@ CAPTION_STYLES = {
         "outline": 0,
         "shadow": 0,
         "alignment": 2,
-        "margin_v": 220,
+        "margin_v": 576,
     },
     "premium_aesthetic": {
         "font": "Montserrat Black", 
-        "fontsize": 98,
+        "fontsize": 110, # Bigger for more impact
         "primary_color": "&H00FFFFFF",
         "highlight_color": "&H0000FF00", # Neon Green
-        "secondary_color": "&H0000FFFF", # Neon Yellow for contrast
         "outline_color": "&H00000000",
         "back_color": "&H00000000",
         "bold": True,
         "outline": 12,
         "shadow": 0,
         "alignment": 2,
-        "margin_v": 190,
+        "margin_v": 120, # Moved down from 576
     },
-    "aesthetic_contrast": {
-        "font": "The Bold Font",
-        "fontsize": 105,
-        "primary_color": "&H00FFFFFF",
-        "highlight_color": "&H0000D4FF", # Gold
+    "typography_motion": {
+        "font": "Montserrat Black", # Base font for caps
+        "secondary_font": "Segoe Script", # Standard Windows Cursive
+        "fontsize": 85,
+        "primary_color": "&H0000D4FF", # Active: Gold
+        "highlight_color": "&H00FFFFFF", # Inactive: White
         "outline_color": "&H00000000",
-        "back_color": "&H60000000", # Translucent background box style
+        "back_color": "&H00000000",
         "bold": True,
-        "outline": 0,
+        "outline": 10,
         "shadow": 0,
         "alignment": 2,
-        "margin_v": 210,
+        "margin_v": 80, # Optimized bottom position (Below the video)
     }
 }
 
@@ -181,7 +180,7 @@ POWER_WORDS = [
     "wealth", "freedom", "prison", "breakout", "system", "matrix", "wake", "sleep", "dream", "real"
 ]
 
-DEFAULT_CAPTION_STYLE = "viral"
+DEFAULT_CAPTION_STYLE = "typography_motion"
 
 # API Keys (stored in .env file, never committed to git)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")

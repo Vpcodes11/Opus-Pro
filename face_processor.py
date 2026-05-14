@@ -1,26 +1,24 @@
 import cv2
-import mediapipe as mp
 import numpy as np
+import os
 
 class FaceTracker:
     def __init__(self):
-        self.mp_face_detection = mp.solutions.face_detection
-        self.face_detection = self.mp_face_detection.FaceDetection(
-            model_selection=1, # 0 for short-range, 1 for long-range (podcasts)
-            min_detection_confidence=0.5
-        )
+        # Load pre-trained face detection cascade from OpenCV
+        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        self.face_cascade = cv2.CascadeClassifier(cascade_path)
+        if self.face_cascade.empty():
+            print("Warning: Could not load Haar Cascade. Face tracking may fail.")
 
     def find_best_crop_x(self, video_path, start_time, end_time, target_width=1080, target_height=1920):
         """
-        Samples frames from the video and finds the average center X of the face.
-        Returns the X coordinate to center the 9:16 crop around.
+        Samples frames from the video and finds the average center X of the face using OpenCV.
         """
         cap = cv2.VideoCapture(video_path)
-        fps = cap.get(cv2.CAP_PROP_FPS)
         src_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         src_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         
-        # Sample 5-10 frames evenly throughout the clip
+        # Sample 10 frames
         sample_times = np.linspace(start_time, end_time, 10)
         x_centers = []
 
@@ -30,29 +28,33 @@ class FaceTracker:
             if not ret:
                 continue
             
-            # Convert to RGB for MediaPipe
-            results = self.face_detection.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            # Convert to grayscale for detection
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
             
-            if results.detections:
-                # Take the first (largest) face
-                bbox = results.detections[0].location_data.relative_bounding_box
-                center_x = (bbox.xmin + bbox.width / 2) * src_w
+            if len(faces) > 0:
+                # Find the largest face by area
+                largest_face = max(faces, key=lambda f: f[2] * f[3])
+                (x, y, w, h) = largest_face
+                center_x = x + w / 2
                 x_centers.append(center_x)
 
         cap.release()
 
         if not x_centers:
-            return src_w / 2 # Fallback to center
+            return src_w / 2 # Fallback
             
-        # Use the median X to avoid jitter from background faces
+        # Use median to avoid outliers
         avg_x = np.median(x_centers)
         
-        # Clamp X so the crop doesn't go out of bounds
+        # Clamp
         crop_w = int(src_h * (target_width / target_height))
+        if crop_w > src_w:
+            return src_w / 2
+            
         min_x = crop_w / 2
         max_x = src_w - (crop_w / 2)
         
         return max(min_x, min(avg_x, max_x))
 
-# Singleton instance
 tracker = FaceTracker()
