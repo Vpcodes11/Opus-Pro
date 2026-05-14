@@ -20,6 +20,12 @@ Opus Pro (Open Source) is a high-performance alternative to commercial clipping 
 - **Python 3.10+**
 - **FFmpeg**: Must be installed and available in your PATH.
 - **Groq API Key**: Get one for free at [console.groq.com](https://console.groq.com).
+- **Recommended Fonts**: For the best aesthetic results, install these fonts:
+    - [The Bold Font](https://www.dafont.com/the-bold-font.font) (Used for Viral style)
+    - [Montserrat](https://fonts.google.com/specimen/Montserrat) (Used for Bold Impact)
+    - [Outfit](https://fonts.google.com/specimen/Outfit) (Used for Neon Pulse)
+    - [Komika Axis](https://www.dafont.com/komika-axis.font) (Used for Karaoke)
+    - [Inter](https://fonts.google.com/specimen/Inter) (Used for TikTok/Minimal)
 
 ### Installation
 

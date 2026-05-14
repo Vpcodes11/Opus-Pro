@@ -5,3 +5,6 @@ openai
 yt-dlp
 python-dotenv
 aiofiles
+mediapipe
+opencv-python
+numpy

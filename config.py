@@ -46,6 +46,7 @@ CAPTION_STYLES = {
         "back_color": "&H80000000",
         "bold": True,
         "outline": 6,
+        "shadow": 4,
         "alignment": 2,
         "margin_v": 200,
     },
@@ -58,11 +59,13 @@ CAPTION_STYLES = {
         "back_color": "&H00000000",
         "bold": True,
         "outline": 4,
+        "shadow": 2,
         "alignment": 2,
         "margin_v": 220,
     },
     "viral": {
-        "font": "Outfit", # Modern rounded font
+        "font": "The Bold Font", # Requires installation
+        "fallback_font": "Arial Black",
         "fontsize": 94,
         "primary_color": "&H00FFFFFF",
         "highlight_color": "&H0000D4FF", # Gold/Orange
@@ -70,22 +73,113 @@ CAPTION_STYLES = {
         "back_color": "&H00000000",
         "bold": True,
         "outline": 8,
+        "shadow": 6,
         "alignment": 2,
         "margin_v": 180,
     },
-    "neon": {
-        "font": "Inter",
-        "fontsize": 80,
-        "primary_color": "&H0000FF00",
-        "highlight_color": "&H00FF00FF",
+    "bold_impact": {
+        "font": "Montserrat ExtraBold", 
+        "fontsize": 100,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H000022FF", # Vibrant Red
+        "outline_color": "&H00000000",
+        "back_color": "&H40000000",
+        "bold": True,
+        "outline": 10,
+        "shadow": 8,
+        "alignment": 2,
+        "margin_v": 180,
+    },
+    "neon_pulse": {
+        "font": "Outfit",
+        "fontsize": 85,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H00FF00FF", # Magenta
         "outline_color": "&H00000000",
         "back_color": "&H00000000",
         "bold": True,
-        "outline": 5,
+        "outline": 6,
+        "shadow": 12, # Deep shadow for glow effect
+        "alignment": 2,
+        "margin_v": 200,
+    },
+    "karaoke": {
+        "font": "Komika Axis",
+        "fontsize": 90,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H0000FFFF", # Yellow
+        "outline_color": "&H00000000",
+        "back_color": "&H00000000",
+        "bold": True,
+        "outline": 10,
+        "shadow": 4,
         "alignment": 2,
         "margin_v": 190,
     },
+    "high_intensity": {
+        "font": "The Bold Font",
+        "fontsize": 110,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H0000FFFF", # Yellow
+        "outline_color": "&H00000000",
+        "back_color": "&H00000000",
+        "bold": True,
+        "outline": 12,
+        "shadow": 0,
+        "alignment": 2,
+        "margin_v": 200,
+    },
+    "minimal_modern": {
+        "font": "Inter",
+        "fontsize": 75,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H00FF00FF", # Magenta
+        "outline_color": "&H00000000",
+        "back_color": "&H00000000",
+        "bold": True,
+        "outline": 0,
+        "shadow": 0,
+        "alignment": 2,
+        "margin_v": 220,
+    },
+    "premium_aesthetic": {
+        "font": "Montserrat Black", 
+        "fontsize": 98,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H0000FF00", # Neon Green
+        "secondary_color": "&H0000FFFF", # Neon Yellow for contrast
+        "outline_color": "&H00000000",
+        "back_color": "&H00000000",
+        "bold": True,
+        "outline": 12,
+        "shadow": 0,
+        "alignment": 2,
+        "margin_v": 190,
+    },
+    "aesthetic_contrast": {
+        "font": "The Bold Font",
+        "fontsize": 105,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H0000D4FF", # Gold
+        "outline_color": "&H00000000",
+        "back_color": "&H60000000", # Translucent background box style
+        "bold": True,
+        "outline": 0,
+        "shadow": 0,
+        "alignment": 2,
+        "margin_v": 210,
+    }
 }
+
+# Power words for automatic capitalization and highlighting
+POWER_WORDS = [
+    "amazing", "secret", "never", "always", "money", "growth", "viral", "hacks", "life", "change", "fast", "easy", 
+    "simple", "power", "win", "lose", "stop", "start", "now", "today", "tomorrow", "don't", "can't", "must",
+    "truth", "lies", "billion", "million", "rich", "poor", "success", "failure", "everything", "nothing",
+    "insane", "crazy", "huge", "shocking", "exposed", "dangerous", "illegal", "hidden", "private", "dark",
+    "light", "heaven", "hell", "god", "devil", "love", "hate", "fear", "brave", "strong", "weak", "power",
+    "wealth", "freedom", "prison", "breakout", "system", "matrix", "wake", "sleep", "dream", "real"
+]
 
 DEFAULT_CAPTION_STYLE = "viral"
 

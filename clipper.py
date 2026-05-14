@@ -84,7 +84,7 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{style['font']},{style['fontsize']},{style['primary_color']},{style['highlight_color']},{style['outline_color']},{style['back_color']},{bold_flag},0,0,0,100,100,0,0,1,{style['outline']},0,{style['alignment']},40,40,{style['margin_v']},1
+Style: Default,{style['font']},{style['fontsize']},{style['primary_color']},{style['highlight_color']},{style['outline_color']},{style['back_color']},{bold_flag},0,0,0,100,100,0,0,1,{style['outline']},{style['shadow']},{style['alignment']},40,40,{style['margin_v']},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -105,6 +105,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     if current_group:
         groups.append(current_group)
 
+    # Import power words from config
+    from config import POWER_WORDS
+
     # Generate dialogue lines with karaoke timing
     for group in groups:
         if not group:
@@ -119,18 +122,48 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         start_ts = format_ass_time(group_start)
         end_ts = format_ass_time(group_end + 0.4)
 
-        # Build karaoke text — \k creates punchy word jumps
+        # Build karaoke text
         karaoke_parts = []
+        
         for word in group:
             duration_cs = int((word['end'] - word['start']) * 100)
             if duration_cs < 8:
                 duration_cs = 8
-            # \k highlight effect
-            karaoke_parts.append(f"{{\\k{duration_cs}}}{word['word']} ")
+                
+            raw_word = word['word'].strip()
+            clean_word = raw_word.lower().strip('.,!?:;"()')
+            
+            # Aesthetic Casing Logic:
+            # - POWER_WORDS -> ALL CAPS + Secondary Color (via \k)
+            # - Regular Words -> lowercase for that clean "modern" look
+            # - Long words (> 7 chars) -> Sentence Case
+            
+            if clean_word in POWER_WORDS:
+                display_word = raw_word.upper()
+                # Optional: Force a specific color for power words even before they are highlighted
+                # part = f"{{\\k{duration_cs}}}{{\\c{style['highlight_color']}}}{display_word}{{\\c{style['primary_color']}}} "
+                part = f"{{\\k{duration_cs}}}{display_word} "
+            elif len(clean_word) > 7:
+                display_word = raw_word.capitalize()
+                part = f"{{\\k{duration_cs}}}{display_word} "
+            else:
+                display_word = raw_word.lower()
+                part = f"{{\\k{duration_cs}}}{display_word} "
+                
+            karaoke_parts.append(part)
 
         text = "".join(karaoke_parts).strip()
-        # Add subtle fade and zoom-in for each line
-        ass_content += f"Dialogue: 0,{start_ts},{end_ts},Default,,0,0,0,,{{\\an{style['alignment']}\\fad(80,80)\\t(0,100,\\fscx105\\fscy105)\\t(100,200,\\fscx100\\fscy100)}}{text}\n"
+        
+        # Apply high-end animations: fade + scale-up + subtle position shift
+        # \t is the transform tag in ASS. (0,80) means from time 0 to 80ms.
+        animation = (
+            f"{{\\an{style['alignment']}"
+            f"\\fad(60,60)"
+            f"\\t(0,100,\\fscx110\\fscy110)"
+            f"\\t(100,200,\\fscx100\\fscy100)}}"
+        )
+        
+        ass_content += f"Dialogue: 0,{start_ts},{end_ts},Default,,0,0,0,,{animation}{text}\n"
 
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_content)
@@ -163,38 +196,75 @@ def create_clip(video_path, clip_info, words, output_path, clip_index,
     ass_path = os.path.join(work_dir, f"subs_{clip_index}.ass")
     generate_ass_subtitles(words, start, end, ass_path, caption_style)
 
+    # Step 2: Intelligent Cropping (Face Tracking)
+    from face_processor import tracker
+    src_w, src_h, _ = get_video_info(video_path)
+    
+    # Find the best horizontal center for the 9:16 crop
+    try:
+        center_x = tracker.find_best_crop_x(video_path, start, end, tw, th)
+    except Exception:
+        center_x = src_w / 2
+
+    # Calculate crop width for 9:16
+    crop_w = int(src_h * (tw / th))
+    if crop_w > src_w:
+        crop_w = src_w
+    
+    x_offset = int(center_x - (crop_w / 2))
+    # Ensure crop stays within video bounds
+    x_offset = max(0, min(x_offset, src_w - crop_w))
+
     # Escape path for FFmpeg filter (Windows paths need special handling)
     ass_escaped = ass_path.replace('\\', '/').replace(':', '\\:')
 
-    # Get source video dimensions
-    src_w, src_h, _ = get_video_info(video_path)
-    src_aspect = src_w / src_h
-    target_aspect = tw / th
+    # Progress bar parameters
+    pb_h = 12
+    pb_color = "0xFFFF00" # Yellow in FFmpeg format (actually depends on filter)
+    
+    # Step 3: Punch Zoom Logic (Pulse on Power Words)
+    from config import POWER_WORDS
+    zoom_expr = "1.0"
+    for word in words:
+        if word['start'] >= start and word['end'] <= end:
+            clean_word = word['word'].lower().strip('.,!?:;"()')
+            if clean_word in POWER_WORDS:
+                # Zoom in 10% during power words
+                w_start = word['start'] - start
+                w_end = word['end'] - start
+                zoom_expr = f"if(between(it,{w_start:.2f},{w_end:.2f}),1.1,{zoom_expr})"
 
-    if preset in ("tiktok", "youtube_shorts") and src_aspect > 1:
-        # Landscape source → vertical output: blurred bg + sharp center
+    # Final filter construction
+    zoom_filter = f"zoompan=z='{zoom_expr}':d=1:s={tw}x{th}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+
+    if preset in ("tiktok", "youtube_shorts") and src_w > src_h:
+        # Landscape source → vertical output: blurred bg + tracked center + punch zoom
         filter_complex = (
             f"[0:v]scale={tw}:{th}:force_original_aspect_ratio=increase,"
             f"crop={tw}:{th},boxblur=25:5[bg];"
-            f"[0:v]scale={tw}:-2[fg];"
+            f"[0:v]crop={crop_w}:{src_h}:{x_offset}:0,scale={tw}:{th},{zoom_filter}[fg];"
             f"[bg][fg]overlay=(W-w)/2:(H-h)/2[vid];"
-            f"[vid]ass='{ass_escaped}'[out]"
+            f"[vid]ass='{ass_escaped}'[with_subs];"
+            f"[with_subs]drawbox=y=ih-{pb_h}:w=iw*t/{duration}:h={pb_h}:color=yellow@0.8:t=fill[out]"
         )
     elif preset == "square":
-        # Square crop with blurred background
+        # Square crop with face tracking + punch zoom
+        sq_w = min(src_w, src_h)
+        sq_x = int(center_x - (sq_w / 2))
+        sq_x = max(0, min(sq_x, src_w - sq_w))
+        
         filter_complex = (
-            f"[0:v]scale={tw}:{th}:force_original_aspect_ratio=increase,"
-            f"crop={tw}:{th},boxblur=20:4[bg];"
-            f"[0:v]scale={tw}:-2[fg];"
-            f"[bg][fg]overlay=(W-w)/2:(H-h)/2[vid];"
-            f"[vid]ass='{ass_escaped}'[out]"
+            f"[0:v]crop={sq_w}:{sq_w}:{sq_x}:0,scale={tw}:{th},{zoom_filter}[vid];"
+            f"[vid]ass='{ass_escaped}'[with_subs];"
+            f"[with_subs]drawbox=y=ih-{pb_h}:w=iw*t/{duration}:h={pb_h}:color=yellow@0.8:t=fill[out]"
         )
     else:
-        # Landscape or matching aspect
+        # Standard landscape or matching aspect
         filter_complex = (
             f"[0:v]scale={tw}:{th}:force_original_aspect_ratio=decrease,"
-            f"pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2:black[vid];"
-            f"[vid]ass='{ass_escaped}'[out]"
+            f"pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2:black,{zoom_filter}[vid];"
+            f"[vid]ass='{ass_escaped}'[with_subs];"
+            f"[with_subs]drawbox=y=ih-{pb_h}:w=iw*t/{duration}:h={pb_h}:color=yellow@0.8:t=fill[out]"
         )
 
     cmd = [
