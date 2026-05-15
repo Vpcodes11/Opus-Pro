@@ -349,6 +349,11 @@ async def get_status(job_id: str):
 async def download_clip(job_id: str, filename: str):
     """Download a generated clip"""
     filepath = OUTPUT_DIR / job_id / filename
+
+    # Prevent path traversal
+    if not filepath.resolve().is_relative_to(OUTPUT_DIR.resolve()):
+        return JSONResponse({'error': 'Invalid path'}, status_code=400)
+
     if not filepath.exists():
         return JSONResponse({'error': 'File not found'}, status_code=404)
     return FileResponse(
@@ -362,6 +367,11 @@ async def download_clip(job_id: str, filename: str):
 async def preview_clip(job_id: str, filename: str):
     """Stream clip for in-browser preview"""
     filepath = OUTPUT_DIR / job_id / filename
+
+    # Prevent path traversal
+    if not filepath.resolve().is_relative_to(OUTPUT_DIR.resolve()):
+        return JSONResponse({'error': 'Invalid path'}, status_code=400)
+
     if not filepath.exists():
         return JSONResponse({'error': 'File not found'}, status_code=404)
 
