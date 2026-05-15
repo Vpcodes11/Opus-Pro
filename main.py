@@ -348,7 +348,10 @@ async def get_status(job_id: str):
 @app.get("/api/download/{job_id}/{filename}")
 async def download_clip(job_id: str, filename: str):
     """Download a generated clip"""
-    filepath = OUTPUT_DIR / job_id / filename
+    filepath = (OUTPUT_DIR / job_id / filename).resolve()
+    if not filepath.is_relative_to(OUTPUT_DIR.resolve()):
+        return JSONResponse({'error': 'Access denied'}, status_code=403)
+
     if not filepath.exists():
         return JSONResponse({'error': 'File not found'}, status_code=404)
     return FileResponse(
@@ -361,7 +364,10 @@ async def download_clip(job_id: str, filename: str):
 @app.get("/api/preview/{job_id}/{filename}")
 async def preview_clip(job_id: str, filename: str):
     """Stream clip for in-browser preview"""
-    filepath = OUTPUT_DIR / job_id / filename
+    filepath = (OUTPUT_DIR / job_id / filename).resolve()
+    if not filepath.is_relative_to(OUTPUT_DIR.resolve()):
+        return JSONResponse({'error': 'Access denied'}, status_code=403)
+
     if not filepath.exists():
         return JSONResponse({'error': 'File not found'}, status_code=404)
 
@@ -380,7 +386,16 @@ async def delete_job(job_id: str):
     jobs.pop(job_id, None)
 
     # Clean up files
-    for d in [UPLOAD_DIR / job_id, OUTPUT_DIR / job_id]:
+    upload_job_dir = (UPLOAD_DIR / job_id).resolve()
+    output_job_dir = (OUTPUT_DIR / job_id).resolve()
+
+    if not upload_job_dir.is_relative_to(UPLOAD_DIR.resolve()) or upload_job_dir == UPLOAD_DIR.resolve():
+        return JSONResponse({'error': 'Access denied'}, status_code=403)
+
+    if not output_job_dir.is_relative_to(OUTPUT_DIR.resolve()) or output_job_dir == OUTPUT_DIR.resolve():
+        return JSONResponse({'error': 'Access denied'}, status_code=403)
+
+    for d in [upload_job_dir, output_job_dir]:
         if d.exists():
             shutil.rmtree(d, ignore_errors=True)
 
