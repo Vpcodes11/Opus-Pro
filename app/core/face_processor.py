@@ -30,8 +30,8 @@ class FaceTracker:
             cap.release()
             return None
 
-        # Sample frames every 0.1 seconds for efficiency
-        sample_interval = 0.1 
+        # Sample frames every 0.2 seconds for efficiency (2x speedup)
+        sample_interval = 0.2 
         current_t = start_time
         raw_centers = []
 

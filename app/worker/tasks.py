@@ -83,25 +83,45 @@ def process_video_job(job_id):
         # Step 2: Analyze for viral moments
         clips_info = analyze_transcript(transcript, GROQ_API_KEY, progress_cb, provider)
 
-        # Step 3: Create clips + thumbnails
+        # Step 3: Create clips + thumbnails (PARALLEL PROCESSING)
         output_dir = OUTPUT_DIR / job_id
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        progress_cb("Creating clips in parallel...", 75)
+        
         clip_results = []
+        
+        # We'll do a simple trick: create thumbnails first (very fast)
+        for i, clip_info in enumerate(clips_info):
+            thumb_path = str(output_dir / f"thumb_{i+1}.jpg")
+            generate_thumbnail(video_path, clip_info['start_time'], thumb_path)
+            
+        from concurrent.futures import ProcessPoolExecutor
+        
+        # Process clips in parallel using all available CPU cores
+        # Note: progress_cb is not passed to avoid inter-process communication overhead
+        with ProcessPoolExecutor(max_workers=min(4, os.cpu_count())) as executor:
+            futures = []
+            for i, clip_info in enumerate(clips_info):
+                output_path = str(output_dir / f"clip_{i+1}.mp4")
+                futures.append(executor.submit(
+                    create_clip,
+                    video_path, clip_info, transcript['words'],
+                    output_path, i, None, 
+                    caption_style, preset
+                ))
+            
+            # Wait for all clips to finish
+            for i, future in enumerate(futures):
+                future.result()
+                progress_cb(f"Finished clip {i+1} of {len(clips_info)}...", 75 + int(((i+1)/len(clips_info)) * 20))
+
+        # Finalize results
         for i, clip_info in enumerate(clips_info):
             output_path = str(output_dir / f"clip_{i+1}.mp4")
             thumb_path = str(output_dir / f"thumb_{i+1}.jpg")
 
-            create_clip(
-                video_path, clip_info, transcript['words'],
-                output_path, i, progress_cb,
-                caption_style, preset
-            )
-
-            generate_thumbnail(video_path, clip_info['start_time'], thumb_path)
-
             if STORAGE_MODE == "cloud":
-                progress_cb(f"Uploading clip {i+1} to cloud...", 90 + i)
                 storage.upload_file(output_path, f"jobs/{job_id}/clip_{i+1}.mp4")
                 storage.upload_file(thumb_path, f"jobs/{job_id}/thumb_{i+1}.jpg")
 
