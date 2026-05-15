@@ -348,7 +348,10 @@ async def get_status(job_id: str):
 @app.get("/api/download/{job_id}/{filename}")
 async def download_clip(job_id: str, filename: str):
     """Download a generated clip"""
-    filepath = OUTPUT_DIR / job_id / filename
+    filepath = (OUTPUT_DIR / job_id / filename).resolve()
+    if not filepath.is_relative_to(OUTPUT_DIR.resolve()):
+        return JSONResponse({'error': 'Invalid path'}, status_code=400)
+
     if not filepath.exists():
         return JSONResponse({'error': 'File not found'}, status_code=404)
     return FileResponse(
@@ -361,7 +364,10 @@ async def download_clip(job_id: str, filename: str):
 @app.get("/api/preview/{job_id}/{filename}")
 async def preview_clip(job_id: str, filename: str):
     """Stream clip for in-browser preview"""
-    filepath = OUTPUT_DIR / job_id / filename
+    filepath = (OUTPUT_DIR / job_id / filename).resolve()
+    if not filepath.is_relative_to(OUTPUT_DIR.resolve()):
+        return JSONResponse({'error': 'Invalid path'}, status_code=400)
+
     if not filepath.exists():
         return JSONResponse({'error': 'File not found'}, status_code=404)
 
@@ -380,8 +386,9 @@ async def delete_job(job_id: str):
     jobs.pop(job_id, None)
 
     # Clean up files
-    for d in [UPLOAD_DIR / job_id, OUTPUT_DIR / job_id]:
-        if d.exists():
-            shutil.rmtree(d, ignore_errors=True)
+    for base_dir in [UPLOAD_DIR, OUTPUT_DIR]:
+        job_dir = (base_dir / job_id).resolve()
+        if job_dir.is_relative_to(base_dir.resolve()) and job_dir.exists() and job_dir != base_dir.resolve():
+            shutil.rmtree(job_dir, ignore_errors=True)
 
     return JSONResponse({'success': True})
