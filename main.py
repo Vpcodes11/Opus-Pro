@@ -3,6 +3,7 @@ import asyncio
 import os
 import uuid
 import shutil
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect
@@ -31,6 +32,21 @@ ws_connections = {}
 
 # Serve static files
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+
+def secure_filename(filename: str) -> str:
+    """Sanitizes user-provided filename to prevent path traversal and other issues."""
+    if not filename:
+        return "unnamed_file"
+    # Convert windows path separators
+    filename = filename.replace("\\", "/")
+    # Extract just the filename
+    filename = os.path.basename(filename)
+    # Remove any character that isn't alphanumeric, dot, hyphen or underscore
+    filename = re.sub(r'[^A-Za-z0-9.\-_]', '_', filename)
+    # Remove leading dots, hyphens and underscores to avoid hidden files or flag issues
+    filename = filename.lstrip('.-_')
+    return filename or "unnamed_file"
 
 
 @app.get("/")
@@ -83,7 +99,8 @@ async def upload_video(
         asyncio.create_task(process_job_with_download(job_id, url.strip(), str(job_dir)))
     elif file:
         # File upload mode
-        video_path = job_dir / file.filename
+        safe_name = secure_filename(file.filename)
+        video_path = job_dir / safe_name
         with open(video_path, 'wb') as f:
             while chunk := await file.read(1024 * 1024):
                 f.write(chunk)
@@ -98,7 +115,7 @@ async def upload_video(
             'message': 'Upload complete, starting processing...',
             'clips': [],
             'transcript': None,
-            'source': file.filename,
+            'source': safe_name,
         }
         asyncio.create_task(process_job(job_id))
     else:
