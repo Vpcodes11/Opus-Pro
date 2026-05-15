@@ -3,7 +3,7 @@ import subprocess
 import os
 import json
 from openai import OpenAI
-from config import WHISPER_MAX_FILE_SIZE, AUDIO_CHUNK_DURATION
+from app.config import WHISPER_MAX_FILE_SIZE, AUDIO_CHUNK_DURATION
 
 # Provider configs
 PROVIDERS = {

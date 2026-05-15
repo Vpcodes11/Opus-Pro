@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 OUTPUT_DIR = BASE_DIR / "output"
 TEMP_DIR = BASE_DIR / "temp"
@@ -185,3 +185,11 @@ DEFAULT_CAPTION_STYLE = "typography_motion"
 # API Keys (stored in .env file, never committed to git)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 DEFAULT_PROVIDER = "groq"
+
+# Cloud Storage (S3 / R2)
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
+S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
+S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+S3_REGION = os.getenv("S3_REGION", "us-east-1")
+STORAGE_MODE = os.getenv("STORAGE_MODE", "local") # "local" or "cloud"

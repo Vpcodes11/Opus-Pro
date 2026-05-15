@@ -2,22 +2,41 @@
 __pycache__/
 *.py[cod]
 *$py.class
-.env
 venv/
-ENV/
+.venv/
+env/
 
-# Project Specific
+# Database
+*.db
+*.sqlite3
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Media & Temporary Files
 uploads/
 output/
 temp/
 *.mp4
-*.mkv
-*.webm
-*.ass
+*.mp3
+*.m4a
+*.wav
 *.jpg
+*.jpeg
 *.png
+*.ass
+
+# Docker
+.docker_data/
 
 # IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db

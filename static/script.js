@@ -1,7 +1,15 @@
 /**
  * Opus Pro — Frontend Logic
- * Premium Opus Pro alternative UI
+ * Premium Opus Pro alternative UI with Supabase Auth
  */
+
+// ============ CONFIG ============
+const SUPABASE_URL = "https://tmvcemupolugzknwhszf.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtdmNlbXVwb2x1Z3prbndoc3pmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NzgyMjksImV4cCI6MjA5NDM1NDIyOX0.OdJtdcMoJUAppZn6J1MBGi9IvsHNSU0BGXIHMPBT_CI";
+
+// The global variable from the CDN is 'supabase'
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log("Supabase initialized:", SUPABASE_URL);
 
 // ============ DOM ============
 const $ = id => document.getElementById(id);
@@ -36,13 +44,116 @@ const downloadAllBtn = $('download-all-btn');
 const newProjectBtn = $('new-project-btn');
 const toggleTranscriptBtn = $('toggle-transcript-btn');
 
+// Auth DOM
+const authModal = $('auth-modal');
+const authForm = $('auth-form');
+const loginBtn = $('login-btn');
+const logoutBtn = $('logout-btn');
+const userProfile = $('user-profile');
+const userTier = $('user-tier');
+const userCredits = $('user-credits');
+const closeAuth = $('close-auth');
+const authToggle = $('auth-toggle');
+const authTitle = $('auth-title');
+const authSubmit = $('auth-submit');
+
 let selectedFile = null;
 let currentJobId = null;
 let ws = null;
 let pollTimer = null;
 let activeTab = 'upload';
+let authMode = 'login'; // 'login' or 'signup'
+let currentUser = null;
 
-// ============ Init ============
+// ============ Auth Logic ============
+
+async function updateAuthUI() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        currentUser = session.user;
+        loginBtn.classList.add('hidden');
+        userProfile.classList.remove('hidden');
+        fetchUserData();
+    } else {
+        currentUser = null;
+        loginBtn.classList.remove('hidden');
+        userProfile.classList.add('hidden');
+    }
+}
+
+async function fetchUserData() {
+    try {
+        const res = await authenticatedFetch('/api/me');
+        if (res.ok) {
+            const data = await res.json();
+            userTier.textContent = data.tier.toUpperCase();
+            userCredits.textContent = `${data.total_limit - data.minutes_remaining}/${data.total_limit} min`;
+        }
+    } catch (e) { console.error('Error fetching user stats:', e); }
+}
+
+async function authenticatedFetch(url, options = {}) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${session?.access_token}`
+    };
+    return fetch(url, { ...options, headers });
+}
+
+loginBtn.addEventListener('click', () => {
+    authModal.classList.remove('hidden');
+});
+
+closeAuth.addEventListener('click', () => authModal.classList.add('hidden'));
+
+authToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    authMode = authMode === 'login' ? 'signup' : 'login';
+    authTitle.textContent = authMode === 'login' ? 'Welcome back' : 'Create an account';
+    authSubmit.textContent = authMode === 'login' ? 'Login' : 'Sign Up';
+    authToggle.textContent = authMode === 'login' ? 'Sign Up' : 'Login';
+    $('auth-toggle-text').innerHTML = authMode === 'login' 
+        ? "Don't have an account? <a href='#' id='auth-toggle'>Sign Up</a>"
+        : "Already have an account? <a href='#' id='auth-toggle'>Login</a>";
+    // Re-bind because we replaced innerHTML
+    $('auth-toggle').addEventListener('click', (ev) => {
+        ev.preventDefault();
+        authToggle.click();
+    });
+});
+
+authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('auth-email').value;
+    const password = $('auth-password').value;
+    authSubmit.disabled = true;
+    authSubmit.textContent = 'Please wait...';
+
+    try {
+        let result;
+        if (authMode === 'login') {
+            result = await supabaseClient.auth.signInWithPassword({ email, password });
+        } else {
+            result = await supabaseClient.auth.signUp({ email, password });
+        }
+
+        if (result.error) throw result.error;
+
+        authModal.classList.add('hidden');
+        await updateAuthUI();
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        authSubmit.disabled = false;
+        authSubmit.textContent = authMode === 'login' ? 'Login' : 'Sign Up';
+    }
+});
+
+logoutBtn.addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    location.reload();
+});
 
 // ============ Tabs ============
 document.querySelectorAll('.input-tab').forEach(tab => {
@@ -105,6 +216,23 @@ function formatSize(bytes) {
 // ============ Start Processing ============
 startBtn.addEventListener('click', async () => {
     if (startBtn.disabled) return;
+    
+    // Auth Check
+    if (!currentUser) {
+        authModal.classList.remove('hidden');
+        return;
+    }
+
+    // Usage Check (Frontend Pre-check)
+    try {
+        const meRes = await authenticatedFetch('/api/me');
+        const meData = await meRes.json();
+        if (meData.minutes_remaining <= 0) {
+            alert("You have exhausted your limit. Please upgrade to Pro to continue.");
+            return;
+        }
+    } catch (e) { console.log("Pre-check failed, continuing to upload..."); }
+
     startBtn.disabled = true;
     startBtn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
     errorSection.classList.add('hidden');
@@ -123,18 +251,18 @@ startBtn.addEventListener('click', async () => {
             processingSource.textContent = urlInput.value.trim();
         }
 
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
-        if (!res.ok) throw new Error(`Upload failed: ${res.statusText}`);
+        const res = await authenticatedFetch('/api/upload', { method: 'POST', body: formData });
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || `Upload failed: ${res.statusText}`);
+        }
 
         const data = await res.json();
-        if (data.error) throw new Error(data.error);
         currentJobId = data.job_id;
 
-        // Show processing UI
         heroSection.classList.add('hidden');
         processingSection.classList.remove('hidden');
 
-        // Handle download step visibility
         const dlStep = $('step-download');
         if (activeTab === 'url') { dlStep.style.display = 'flex'; }
         else { dlStep.style.display = 'none'; }
@@ -163,11 +291,9 @@ function connectWebSocket(jobId) {
 // ============ Polling ============
 function startPolling(jobId) {
     pollTimer = setInterval(async () => {
-        // Bolt: Early exit to prevent unnecessary HTTP polling when WebSocket is already handling updates
         if (ws && ws.readyState === WebSocket.OPEN) return;
-
         try {
-            const res = await fetch(`/api/status/${jobId}`);
+            const res = await authenticatedFetch(`/api/status/${jobId}`);
             const data = await res.json();
             updateProgress(data.message, data.progress);
             updatePipeline(data.progress);
@@ -201,6 +327,7 @@ function handleUpdate(data) {
         if (ws) ws.close();
         processingSection.classList.add('hidden');
         showResults(data.clips, data.message, data.transcript);
+        fetchUserData(); // Refresh credits
     } else if (data.type === 'error') {
         stopPolling();
         if (ws) ws.close();
@@ -232,7 +359,6 @@ function updatePipeline(progress) {
     });
 }
 
-// ============ Transcript Preview ============
 function showTranscriptPreview(transcript) {
     if (!transcript) return;
     transcriptPreview.classList.remove('hidden');
@@ -247,7 +373,6 @@ function showTranscriptPreview(transcript) {
     });
 }
 
-// ============ Results ============
 function showResults(clips, message, transcript) {
     resultsSection.classList.remove('hidden');
     resultsSummary.textContent = message || `${clips.length} clips ready`;
@@ -291,7 +416,6 @@ function showResults(clips, message, transcript) {
         clipsGrid.appendChild(card);
     });
 
-    // Full transcript
     if (transcript && transcript.segments) {
         fullTranscript.classList.remove('hidden');
         fullTranscriptBody.innerHTML = '';
@@ -304,7 +428,6 @@ function showResults(clips, message, transcript) {
     }
 }
 
-// ============ Download All ============
 downloadAllBtn?.addEventListener('click', () => {
     const links = document.querySelectorAll('.btn-download[download]');
     links.forEach((link, i) => {
@@ -312,7 +435,6 @@ downloadAllBtn?.addEventListener('click', () => {
     });
 });
 
-// ============ New Project ============
 newProjectBtn?.addEventListener('click', () => {
     resultsSection.classList.add('hidden');
     heroSection.classList.remove('hidden');
@@ -327,7 +449,6 @@ newProjectBtn?.addEventListener('click', () => {
     updateStartBtn();
 });
 
-// ============ Toggle Transcript ============
 toggleTranscriptBtn?.addEventListener('click', () => {
     fullTranscriptBody.classList.toggle('collapsed');
     const isCollapsed = fullTranscriptBody.classList.contains('collapsed');
@@ -336,7 +457,6 @@ toggleTranscriptBtn?.addEventListener('click', () => {
         : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>';
 });
 
-// ============ Error ============
 function showError(message) {
     errorSection.classList.remove('hidden');
     errorMessage.textContent = message;
@@ -385,4 +505,5 @@ function formatDuration(seconds) {
 }
 
 // Init
+updateAuthUI();
 updateStartBtn();

@@ -1,66 +1,84 @@
-# Opus Pro — AI Podcast to Viral Clips ⚡
+# 🎬 Opus Pro — AI Viral Clip Engine
 
-Opus Pro (Open Source) is a high-performance alternative to commercial clipping tools. It uses AI to automatically identify the most viral moments from long-form podcasts and transforms them into 9:16 vertical clips with animated, karaoke-style captions.
+![Opus Pro Banner](https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop)
 
-![Opus Pro Preview](https://via.placeholder.com/1200x600/09090b/f4f4f5?text=Opus+Pro+—+AI+Viral+Clipper)
+**Opus Pro** is a high-performance, open-source AI video clipping engine that transforms long-form content (podcasts, streams, interviews) into viral short-form clips for TikTok, Reels, and YouTube Shorts. 
 
-## ✨ Features
+Built with **FastAPI**, **Celery**, **Whisper**, and **LLaMA 3**, it handles the entire pipeline: from URL downloading and AI transcription to face-tracking crops and animated "Typography Motion" captions.
 
-- **🎯 AI Viral Detection**: Uses LLaMA-3 (via Groq) to analyze transcripts and find high-retention "hooks".
-- **🎬 Professional Rendering**: Automated FFmpeg pipeline for 9:16 vertical cropping with blurred backgrounds.
-- **🎤 Animated Captions**: Word-by-word karaoke highlighting (TikTok style) with premium typography.
-- **🌐 Universal Support**: Import videos via local upload or URLs (YouTube, Twitch, X/Twitter, etc.).
-- **⚡ Ultra Fast**: Powered by Groq's lightning-fast inference for transcription and analysis.
-- **💎 Premium UI**: Modern, glassmorphic dark-mode interface with real-time WebSocket progress tracking.
+---
 
-## 🚀 Getting Started
+## ✨ Key Features
 
-### Prerequisites
+- **🎯 AI Viral Moment Detection**: LLaMA 3.1 analyzes transcripts to find the most "hook-worthy" and shareable segments automatically.
+- **📐 Dynamic Face-Tracking**: AI detects faces and automatically crops landscape video into 9:16 vertical format while keeping the speaker centered.
+- **✨ Animated Typography Captions**: Word-by-word "Karaoke style" captions with cursive emphasis and power-word highlighting.
+- **🔗 Universal Import**: Supports YouTube, Twitch, Vimeo, X (Twitter), and 1000+ sites via `yt-dlp`.
+- **🏗️ Industrial SaaS Stack**: Distributed background processing with Docker, Redis, and Celery for maximum scalability.
+- **💳 Commercial Ready**: Integrated Supabase Auth, Usage Credit system, and Stripe Webhook support.
 
-- **Python 3.10+**
-- **FFmpeg**: Must be installed and available in your PATH.
-- **Groq API Key**: Get one for free at [console.groq.com](https://console.groq.com).
-- **Recommended Fonts**: For the best aesthetic results, install these fonts:
-    - [The Bold Font](https://www.dafont.com/the-bold-font.font) (Used for Viral style)
-    - [Montserrat](https://fonts.google.com/specimen/Montserrat) (Used for Bold Impact)
-    - [Outfit](https://fonts.google.com/specimen/Outfit) (Used for Neon Pulse)
-    - [Komika Axis](https://www.dafont.com/komika-axis.font) (Used for Karaoke)
-    - [Inter](https://fonts.google.com/specimen/Inter) (Used for TikTok/Minimal)
-
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Vpcodes11/Opus-Pro.git
-   cd Opus-Pro
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure Environment**:
-   Create a `.env` file in the root directory:
-   ```env
-   GROQ_API_KEY=your_groq_api_key_here
-   ```
-
-### Running the App
-
-```bash
-python -m uvicorn main:app --reload
-```
-
-Open [http://localhost:8000](http://localhost:8000) in your browser.
+---
 
 ## 🛠️ Technology Stack
 
-- **Backend**: FastAPI, Uvicorn, FFmpeg
-- **AI Brain**: OpenAI API (compatible), Groq LLaMA-3, Whisper
-- **Frontend**: Vanilla JS, HTML5, CSS3 (Glassmorphism)
-- **Downloader**: yt-dlp
+| Component | Technology |
+| :--- | :--- |
+| **Backend** | Python, FastAPI |
+| **Task Queue** | Celery, Redis |
+| **AI Transcription** | OpenAI Whisper (via Groq) |
+| **Viral Analysis** | LLaMA 3.1 70B / 8B |
+| **Video Processing** | FFmpeg, OpenCV, MediaPipe |
+| **Auth & DB** | Supabase, SQLAlchemy, SQLite |
+| **Deployment** | Docker, Docker Compose |
 
-## 📝 License
+---
 
-This project is open-source and available under the [MIT License](LICENSE).
+## 🚀 Quick Start (Local Setup)
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/Opus-Pro.git
+cd Opus-Pro
+```
+
+### 2. Configure Environment
+Create a `.env` file from the template and add your API keys:
+```bash
+cp .env.example .env
+```
+*Required: `GROQ_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`.*
+
+### 3. Launch with Docker
+```bash
+docker-compose up --build
+```
+The app will be live at **[http://localhost:8000](http://localhost:8000)**.
+
+---
+
+## 📁 Project Structure
+
+```text
+Opus-Pro/
+├── app/
+│   ├── api/          # FastAPI Routes, Auth, Database Models
+│   ├── core/         # AI Logic (Clipping, Tracking, Transcription)
+│   ├── worker/        # Celery Task Definitions
+│   └── config.py     # Global Settings & Caption Styles
+├── static/           # Premium Frontend (JS/CSS/HTML)
+├── tests/            # Automated Pipeline Tests
+├── Dockerfile        # Container Configuration
+└── docker-compose.yml # Service Orchestration
+```
+
+---
+
+## 📜 License
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙌 Credits
+- **AI Engine**: Powered by Groq (Whisper + LLaMA)
+- **Face Tracking**: MediaPipe by Google
+- **Typography**: Montserrat & Inter via Google Fonts
