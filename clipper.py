@@ -2,9 +2,11 @@
 import subprocess
 import os
 import json
+import functools
 from config import TARGET_WIDTH, TARGET_HEIGHT, CAPTION_STYLES, DEFAULT_CAPTION_STYLE, PRESETS
 
 
+@functools.lru_cache(maxsize=32)
 def get_video_info(video_path):
     """Get video width, height, and duration"""
     cmd = [

@@ -163,6 +163,9 @@ function connectWebSocket(jobId) {
 // ============ Polling ============
 function startPolling(jobId) {
     pollTimer = setInterval(async () => {
+        // Bolt: Early exit to prevent unnecessary HTTP polling when WebSocket is already handling updates
+        if (ws && ws.readyState === WebSocket.OPEN) return;
+
         try {
             const res = await fetch(`/api/status/${jobId}`);
             const data = await res.json();
