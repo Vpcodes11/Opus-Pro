@@ -182,7 +182,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 
 def create_clip(video_path, clip_info, words, output_path, clip_index,
-                progress_callback=None, caption_style=None, preset="tiktok"):
+                progress_callback=None, caption_style=None, preset="tiktok", is_pro=False):
     """
     Create a single clip with Dynamic Face Tracking and Viral Hook Headlines.
     """
@@ -227,7 +227,7 @@ def create_clip(video_path, clip_info, words, output_path, clip_index,
         # Dynamic Crop + Blur Background
         filter_complex = (
             f"[0:v]crop={cw}:{ch}:{first_x}:0,scale={tw}:{th}[vid];"
-            f"[vid]ass='{ass_escaped}'[out]"
+            f"[vid]ass='{ass_escaped}'" + (f"[out]" if is_pro else f",drawtext=text='Created with Opus Pro':x=W-tw-20:y=H-th-20:fontsize=28:fontcolor=white@0.8:box=1:boxcolor=black@0.4:boxborderw=5[out]")
         )
     elif preset in ("tiktok", "youtube_shorts") and src_w > src_h:
         # Standard Landscape-on-Blur if tracking fails
@@ -236,14 +236,14 @@ def create_clip(video_path, clip_info, words, output_path, clip_index,
             f"crop={tw}:{th},boxblur=25:5[bg];"
             f"[0:v]scale={tw}:-2[fg];"
             f"[bg][fg]overlay=(W-w)/2:(H-h)/2[vid];"
-            f"[vid]ass='{ass_escaped}'[out]"
+            f"[vid]ass='{ass_escaped}'" + (f"[out]" if is_pro else f",drawtext=text='Created with Opus Pro':x=W-tw-20:y=H-th-20:fontsize=28:fontcolor=white@0.8:box=1:boxcolor=black@0.4:boxborderw=5[out]")
         )
     else:
         # Standard fit
         filter_complex = (
             f"[0:v]scale={tw}:{th}:force_original_aspect_ratio=decrease,"
             f"pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2:black[vid];"
-            f"[vid]ass='{ass_escaped}'[out]"
+            f"[vid]ass='{ass_escaped}'" + (f"[out]" if is_pro else f",drawtext=text='Created with Opus Pro':x=W-tw-20:y=H-th-20:fontsize=28:fontcolor=white@0.8:box=1:boxcolor=black@0.4:boxborderw=5[out]")
         )
 
     cmd = [

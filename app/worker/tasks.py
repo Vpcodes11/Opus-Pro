@@ -45,6 +45,10 @@ def process_video_job(job_id):
         provider = job.provider or DEFAULT_PROVIDER
         caption_style = job.caption_style or DEFAULT_CAPTION_STYLE
         preset = job.preset or 'tiktok'
+        
+        # Check if user is Pro
+        user = db.query(User).filter(User.id == job.user_id).first()
+        is_pro = user.subscription_tier == "pro" if user else False
 
         def progress_cb(message, progress):
             db_cb = SessionLocal()
@@ -108,7 +112,7 @@ def process_video_job(job_id):
                     create_clip,
                     video_path, clip_info, transcript['words'],
                     output_path, i, None, 
-                    caption_style, preset
+                    caption_style, preset, is_pro
                 ))
             
             # Wait for all clips to finish
