@@ -172,7 +172,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 karaoke_parts.append(part)
 
             text = "".join(karaoke_parts).strip()
-            animation = f"{{\\an{style['alignment']}\\fad(50,50)\\t(0,100,\\fscx115\\fscy115)\\t(100,200,\\fscx100\\fscy100)}}"
+            # Professional Bouncy Animation: Pop in, slight overshoot, then settle
+            animation = f"{{\\an{style['alignment']}\\fad(50,50)\\t(0,80,\\fscx120\\fscy120)\\t(80,160,\\fscx100\\fscy100)}}"
             ass_content += f"Dialogue: 0,{start_ts},{end_ts},Default,,0,0,0,,{animation}{text}\n"
 
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -255,11 +256,11 @@ def create_clip(video_path, clip_info, words, output_path, clip_index,
         '-map', '[out]',
         '-map', '0:a?',
         '-c:v', 'libx264',
-        '-preset', 'ultrafast',
-        '-crf', '22',
+        '-preset', 'superfast',
+        '-crf', '20',
         '-pix_fmt', 'yuv420p',
         '-c:a', 'aac',
-        '-b:a', '128k',
+        '-b:a', '160k',
         '-y',
         output_path
     ]

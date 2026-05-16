@@ -1,13 +1,20 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+import os
 from app.config import BASE_DIR
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{BASE_DIR}/opus_pro.db"
 
-# Setting check_same_thread=False is needed for SQLite when used with FastAPI/threads
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Priority: Environment variable (Postgres) > Local SQLite
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    # Build a local SQLite URL as fallback
+    DATABASE_URL = f"sqlite:///{BASE_DIR}/opus_pro.db"
+
+# SQLite requires different arguments than PostgreSQL
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

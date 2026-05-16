@@ -166,8 +166,20 @@ CAPTION_STYLES = {
         "outline": 10,
         "shadow": 0,
         "alignment": 2,
-        "margin_v": 80, # Optimized bottom position (Below the video)
-    }
+    },
+    "stealth_pro": {
+        "font": "Outfit", 
+        "fontsize": 95,
+        "primary_color": "&H00FFFFFF",
+        "highlight_color": "&H00F65C8B", # Vibrant Purple (Brand Accent)
+        "outline_color": "&H00000000",
+        "back_color": "&H40000000",
+        "bold": True,
+        "outline": 8,
+        "shadow": 12,
+        "alignment": 2,
+        "margin_v": 120,
+    },
 }
 
 # Power words for automatic capitalization and highlighting
@@ -177,13 +189,18 @@ POWER_WORDS = [
     "truth", "lies", "billion", "million", "rich", "poor", "success", "failure", "everything", "nothing",
     "insane", "crazy", "huge", "shocking", "exposed", "dangerous", "illegal", "hidden", "private", "dark",
     "light", "heaven", "hell", "god", "devil", "love", "hate", "fear", "brave", "strong", "weak", "power",
-    "wealth", "freedom", "prison", "breakout", "system", "matrix", "wake", "sleep", "dream", "real"
+    "wealth", "freedom", "prison", "breakout", "system", "matrix", "wake", "sleep", "dream", "real",
+    "unlocked", "revealed", "leaked", "danger", "warning", "billionaire", "passive", "income", "quit",
+    "boss", "fired", "empire", "legend", "warrior", "elite", "stealth", "intelligence", "neural", "viral"
 ]
 
 DEFAULT_CAPTION_STYLE = "typography_motion"
 
 # API Keys (stored in .env file, never committed to git)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    print("CRITICAL WARNING: GROQ_API_KEY is not set in .env. AI Transcription will fail.")
+
 DEFAULT_PROVIDER = "groq"
 
 # Cloud Storage (S3 / R2)
