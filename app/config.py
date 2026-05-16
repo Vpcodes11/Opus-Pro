@@ -193,3 +193,11 @@ S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 S3_REGION = os.getenv("S3_REGION", "us-east-1")
 STORAGE_MODE = os.getenv("STORAGE_MODE", "local") # "local" or "cloud"
+
+# Infrastructure
+REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
+
+# Payments (Stripe)
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STRIPE_PRO_PRICE_ID = os.getenv('STRIPE_PRO_PRICE_ID')

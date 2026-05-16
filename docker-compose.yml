@@ -10,6 +10,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - .:/app
       - ./uploads:/app/uploads
       - ./output:/app/output
       - ./temp:/app/temp
@@ -26,6 +27,7 @@ services:
     build: .
     command: celery -A app.worker.tasks worker --loglevel=info
     volumes:
+      - .:/app
       - ./uploads:/app/uploads
       - ./output:/app/output
       - ./temp:/app/temp

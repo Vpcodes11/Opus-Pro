@@ -28,6 +28,11 @@ We have successfully "Industrialized" the prototype into a production-ready stru
 - **Supabase Integration**: Official SDK implemented. Users are verified via secure JWT tokens.
 - **Secure Sessions**: Authentication is handled on the backend to prevent credit bypassing.
 
+### 💰 Payment System (Local Only)
+- **Stripe Checkout**: Integrated frontend pricing modal with secure backend session creation.
+- **Automated Webhooks**: Logic implemented to handle successful payments and account "level ups."
+- **Usage Credits**: Users automatically receive 200 mins/mo upon upgrading to Pro.
+
 ### 💳 SaaS Business Logic
 - **Credit System**: Automatic tracking of "Minutes Used" vs "Total Limit".
 - **Stripe-Ready**: Billing routers and webhook logic are implemented and ready for price IDs.

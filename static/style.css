@@ -300,3 +300,27 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .auth-footer a:hover { text-decoration:underline; }
 
 @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.auth-divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--text-3); font-size:12px; font-weight:600; }
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.btn-google { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:12px; font-weight:600; border-color:var(--border); background:rgba(255,255,255,0.03); }
+.btn-google:hover { background:rgba(255,255,255,0.08); border-color:var(--border-hover); }
+
+/* ---- Pricing Modal ---- */
+.pricing-card {
+    background: linear-gradient(135deg, var(--bg-card), rgba(139,92,246,0.05));
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: var(--radius);
+    text-align: center;
+    max-width: 480px;
+}
+.pricing-header h2 { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+.pricing-header p { font-size: 14px; color: var(--text-2); margin-bottom: 24px; }
+.features-list { list-style: none; text-align: left; margin: 24px 0; }
+.features-list li { margin-bottom: 12px; font-size: 14px; color: var(--text-2); display: flex; align-items: center; gap: 10px; }
+.price-tag { margin: 32px 0; }
+.price-tag .amount { font-size: 48px; font-weight: 900; color: #fff; }
+.price-tag .period { color: var(--text-3); font-size: 18px; }
+.btn-block { width: 100%; margin-top: 20px; font-size: 16px; padding: 16px; }
+.close-modal { position: absolute; top: 16px; right: 20px; font-size: 24px; color: var(--text-3); cursor: pointer; }
+.close-modal:hover { color: #fff; }

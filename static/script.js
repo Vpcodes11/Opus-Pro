@@ -1,15 +1,21 @@
-/**
- * Opus Pro — Frontend Logic
- * Premium Opus Pro alternative UI with Supabase Auth
- */
+console.log("Opus Pro script starting...");
 
 // ============ CONFIG ============
 const SUPABASE_URL = "https://tmvcemupolugzknwhszf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtdmNlbXVwb2x1Z3prbndoc3pmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NzgyMjksImV4cCI6MjA5NDM1NDIyOX0.OdJtdcMoJUAppZn6J1MBGi9IvsHNSU0BGXIHMPBT_CI";
 
-// The global variable from the CDN is 'supabase'
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log("Supabase initialized:", SUPABASE_URL);
+// Initialize Supabase after ensuring it exists
+let supabaseClient;
+try {
+    if (typeof supabase === 'undefined') {
+        console.error("Supabase library not loaded! Check your CDN link.");
+    } else {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase initialized successfully");
+    }
+} catch (err) {
+    console.error("Critical error during Supabase init:", err);
+}
 
 // ============ DOM ============
 const $ = id => document.getElementById(id);
@@ -56,6 +62,12 @@ const closeAuth = $('close-auth');
 const authToggle = $('auth-toggle');
 const authTitle = $('auth-title');
 const authSubmit = $('auth-submit');
+const googleAuthBtn = $('google-auth-btn');
+
+// Pricing DOM
+const pricingModalEl = $('pricing-modal');
+const checkoutBtn = $('checkout-btn');
+const closeModalBtn = document.querySelector('.close-modal');
 
 let selectedFile = null;
 let currentJobId = null;
@@ -88,9 +100,57 @@ async function fetchUserData() {
             const data = await res.json();
             userTier.textContent = data.tier.toUpperCase();
             userCredits.textContent = `${data.total_limit - data.minutes_remaining}/${data.total_limit} min`;
+            
+            // Apply PRO styling if applicable
+            if (data.tier === 'pro') {
+                userTier.style.background = 'rgba(236, 72, 153, 0.2)';
+                userTier.style.color = '#EC4899';
+                userTier.style.borderColor = 'rgba(236, 72, 153, 0.3)';
+            }
         }
     } catch (e) { console.error('Error fetching user stats:', e); }
 }
+
+function showPricingModal() {
+    pricingModalEl.classList.remove('hidden');
+}
+
+function hidePricingModal() {
+    pricingModalEl.classList.add('hidden');
+}
+
+// Pricing Event Listeners
+userTier.addEventListener('click', showPricingModal);
+userTier.style.cursor = 'pointer';
+
+if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', hidePricingModal);
+}
+
+window.addEventListener('click', (e) => {
+    if (e.target === pricingModalEl) hidePricingModal();
+});
+
+checkoutBtn.addEventListener('click', async () => {
+    checkoutBtn.disabled = true;
+    checkoutBtn.innerHTML = '<span class="btn-spinner"></span> Processing...';
+
+    try {
+        const res = await authenticatedFetch('/api/billing/create-checkout-session', { method: 'POST' });
+        if (!res.ok) throw new Error('Failed to create checkout session');
+        
+        const data = await res.json();
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error('No checkout URL received');
+        }
+    } catch (err) {
+        alert(err.message);
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Start 7-Day Free Trial';
+    }
+});
 
 async function authenticatedFetch(url, options = {}) {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -147,6 +207,21 @@ authForm.addEventListener('submit', async (e) => {
     } finally {
         authSubmit.disabled = false;
         authSubmit.textContent = authMode === 'login' ? 'Login' : 'Sign Up';
+    }
+});
+
+googleAuthBtn.addEventListener('click', async () => {
+    try {
+        console.log("Initiating Google OAuth...");
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin + '/static/index.html'
+            }
+        });
+        if (error) throw error;
+    } catch (err) {
+        alert("Google Login Error: " + err.message);
     }
 });
 
@@ -228,7 +303,7 @@ startBtn.addEventListener('click', async () => {
         const meRes = await authenticatedFetch('/api/me');
         const meData = await meRes.json();
         if (meData.minutes_remaining <= 0) {
-            alert("You have exhausted your limit. Please upgrade to Pro to continue.");
+            showPricingModal();
             return;
         }
     } catch (e) { console.log("Pre-check failed, continuing to upload..."); }
@@ -507,3 +582,15 @@ function formatDuration(seconds) {
 // Init
 updateAuthUI();
 updateStartBtn();
+
+// Check for Stripe success redirect
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('session_id')) {
+    // Show success state (could be a toast or just refreshing user data)
+    setTimeout(() => {
+        alert("Success! Your account has been upgraded to Pro. 🚀");
+        // Clear the URL params without reloading
+        window.history.replaceState({}, document.title, "/static/index.html");
+        fetchUserData();
+    }, 500);
+}
