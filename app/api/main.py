@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app.config import UPLOAD_DIR, OUTPUT_DIR, BASE_DIR, PRESETS, CAPTION_STYLES, GROQ_API_KEY, DEFAULT_PROVIDER, DEFAULT_CAPTION_STYLE, STORAGE_MODE
-from app.api.database import engine, Base, get_db, SessionLocal
+from app.api.database import engine, Base, get_db
 from app.api.models import Job, User
 from app.worker.celery_app import celery_app
 from app.core.storage import storage
