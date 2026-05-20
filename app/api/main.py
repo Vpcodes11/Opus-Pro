@@ -256,9 +256,13 @@ async def delete_job(job_id: str, db: Session = Depends(get_db), user: User = De
     if job:
         if STORAGE_MODE == "cloud":
             if job.clips:
+                tasks = []
                 for clip in job.clips:
-                    storage.delete_file(f"jobs/{job_id}/{clip['filename']}")
-                    storage.delete_file(f"jobs/{job_id}/{clip['thumbnail']}")
+                    tasks.append(asyncio.to_thread(storage.delete_file, f"jobs/{job_id}/{clip['filename']}"))
+                    tasks.append(asyncio.to_thread(storage.delete_file, f"jobs/{job_id}/{clip['thumbnail']}"))
+
+                if tasks:
+                    await asyncio.gather(*tasks)
 
         db.delete(job)
         db.commit()
