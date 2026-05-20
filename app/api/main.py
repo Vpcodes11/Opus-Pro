@@ -72,6 +72,52 @@ async def get_presets():
     })
 
 
+def _process_url_upload(url: str, job_id: str, job_dir: Path, user_id: int, provider: str, preset: str, caption_style: str, db: Session):
+    url = url.strip()
+    new_job = Job(
+        id=job_id,
+        user_id=user_id,
+        status='downloading',
+        provider=provider,
+        preset=preset,
+        caption_style=caption_style,
+        message='Queuing download...',
+        source=url,
+        clips=[],
+        transcript=None
+    )
+    db.add(new_job)
+    db.commit()
+    celery_app.send_task("tasks.download_and_process_job", args=[job_id, url, str(job_dir)])
+
+async def _process_file_upload(file: UploadFile, job_id: str, job_dir: Path, user_id: int, provider: str, preset: str, caption_style: str, db: Session):
+    video_path = job_dir / file.filename
+    with open(video_path, 'wb') as f:
+        while chunk := await file.read(1024 * 1024):
+            f.write(chunk)
+
+    new_job = Job(
+        id=job_id,
+        user_id=user_id,
+        status='queued',
+        video_path=str(video_path),
+        provider=provider,
+        preset=preset,
+        caption_style=caption_style,
+        message='Upload complete, queuing processing...',
+        source=file.filename,
+        clips=[],
+        transcript=None
+    )
+    db.add(new_job)
+    db.commit()
+
+    if STORAGE_MODE == "cloud":
+        storage.upload_file(str(video_path), f"jobs/{job_id}/source/{file.filename}")
+
+    celery_app.send_task("tasks.process_video_job", args=[job_id])
+
+
 @app.post("/api/upload")
 async def upload_video(
     file: UploadFile = File(None),
@@ -95,50 +141,9 @@ async def upload_video(
     job_dir.mkdir(parents=True, exist_ok=True)
 
     if url and url.strip():
-        # URL download mode
-        new_job = Job(
-            id=job_id,
-            user_id=user.id,
-            status='downloading',
-            provider=provider,
-            preset=preset,
-            caption_style=caption_style,
-            message='Queuing download...',
-            source=url.strip(),
-            clips=[],
-            transcript=None
-        )
-        db.add(new_job)
-        db.commit()
-        celery_app.send_task("tasks.download_and_process_job", args=[job_id, url.strip(), str(job_dir)])
-        
+        _process_url_upload(url, job_id, job_dir, user.id, provider, preset, caption_style, db)
     elif file:
-        # File upload mode
-        video_path = job_dir / file.filename
-        with open(video_path, 'wb') as f:
-            while chunk := await file.read(1024 * 1024):
-                f.write(chunk)
-
-        new_job = Job(
-            id=job_id,
-            user_id=user.id,
-            status='queued',
-            video_path=str(video_path),
-            provider=provider,
-            preset=preset,
-            caption_style=caption_style,
-            message='Upload complete, queuing processing...',
-            source=file.filename,
-            clips=[],
-            transcript=None
-        )
-        db.add(new_job)
-        db.commit()
-
-        if STORAGE_MODE == "cloud":
-            storage.upload_file(str(video_path), f"jobs/{job_id}/source/{file.filename}")
-
-        celery_app.send_task("tasks.process_video_job", args=[job_id])
+        await _process_file_upload(file, job_id, job_dir, user.id, provider, preset, caption_style, db)
     else:
         return JSONResponse({'error': 'No file or URL provided'}, status_code=400)
 
