@@ -1,7 +1,7 @@
 import asyncio
 import os
-from main import process_job, jobs
-from config import UPLOAD_DIR
+from app.main import process_job, jobs
+from app.config import UPLOAD_DIR
 
 async def run_test():
     job_id = "test_run"

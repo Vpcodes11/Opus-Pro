@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from downloader import get_video_info_url
+from app.core.downloader import get_video_info_url
 
 class TestDownloader(unittest.TestCase):
     @patch('yt_dlp.YoutubeDL')

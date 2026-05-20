@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from transcriber import get_client, PROVIDERS
+from app.core.transcriber import get_client, PROVIDERS
 
 def test_get_client_groq_provider():
     api_key = "test_groq_key"
