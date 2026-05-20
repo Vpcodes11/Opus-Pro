@@ -1,4 +1,4 @@
-# 📒 Opus Pro: Project Ledger
+# 📒 Clip Aura: Project Ledger
 
 This is the central log of all development actions, feature updates, and usage guides.
 
@@ -16,7 +16,7 @@ This is the central log of all development actions, feature updates, and usage g
 
 ### 🛠️ Current System Status
 *   **Backend**: Running in Docker (FastAPI + Celery + Redis).
-*   **Database**: SQLite (`opus_pro.db`) tracking users and jobs.
+*   **Database**: SQLite (`clip_aura.db`) tracking users and jobs.
 *   **Payments**: Connected to Stripe Test Mode.
 *   **Auth**: Connected to Supabase.
 

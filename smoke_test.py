@@ -22,7 +22,7 @@ def check_database():
     db_url = os.getenv("DATABASE_URL")
     if db_url and "[YOUR_PASSWORD]" not in db_url:
         print("[OK] Production PostgreSQL detected in .env")
-    elif os.path.exists("opus_pro.db"):
+    elif os.path.exists("clip_aura.db"):
         print("[OK] Local SQLite database found.")
     else:
         print("[WARN] No database found. (Run the backend once to initialize)")
@@ -51,7 +51,7 @@ def check_frontend():
         print("[ERROR] Frontend folder not found.")
 
 if __name__ == "__main__":
-    print("--- OPUS PRO PRODUCTION SMOKE TEST ---\n")
+    print("--- CLIP AURA PRODUCTION SMOKE TEST ---\n")
     check_backend()
     check_database()
     check_celery()

@@ -38,7 +38,7 @@ export default function DashboardLayout({
       <aside className="sidebar">
         <div className="sidebar-header">
           <div className="logo-box">O</div>
-          <div className="logo-name">OPUS PRO</div>
+          <div className="logo-name">CLIP AURA</div>
         </div>
 
         <nav className="sidebar-nav">

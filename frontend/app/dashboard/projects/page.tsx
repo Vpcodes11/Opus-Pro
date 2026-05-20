@@ -9,7 +9,7 @@ export default function ComingSoon() {
       <h1 className="text-3xl font-bold">Neural Expansion in Progress</h1>
       <p className="text-muted max-w-md">
         This intelligence module is currently being calibrated for peak performance. 
-        Check back shortly as we expand the Opus Pro ecosystem.
+        Check back shortly as we expand the Clip Aura ecosystem.
       </p>
       <div className="glass px-4 py-2 text-xs font-mono text-accent">
         STATUS: INITIALIZING_V2

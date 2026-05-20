@@ -1,4 +1,4 @@
-"""Opus Pro — AI Video Clipper | FastAPI Server"""
+"""Clip Aura — AI Video Clipper | FastAPI Server"""
 import asyncio
 import os
 import uuid
@@ -24,7 +24,7 @@ from app.api import payments
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Opus Pro — AI Video Clipper")
+app = FastAPI(title="Clip Aura — AI Video Clipper")
 
 app.add_middleware(
     CORSMiddleware,
