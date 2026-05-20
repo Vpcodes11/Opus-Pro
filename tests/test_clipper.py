@@ -6,8 +6,9 @@ from unittest.mock import MagicMock
 sys.modules['dotenv'] = MagicMock()
 sys.modules['mediapipe'] = MagicMock()
 sys.modules['cv2'] = MagicMock()
+sys.modules['numpy'] = MagicMock()
 
-from clipper import format_ass_time
+from app.core.clipper import format_ass_time
 
 @pytest.mark.parametrize("seconds, expected", [
     (0, "0:00:00.00"),
