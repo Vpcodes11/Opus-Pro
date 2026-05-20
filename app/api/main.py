@@ -5,7 +5,6 @@ import uuid
 import shutil
 import json
 import redis.asyncio as redis
-from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
