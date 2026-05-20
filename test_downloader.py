@@ -1,5 +1,5 @@
 import pytest
-from downloader import is_valid_url
+from app.core.downloader import is_valid_url
 
 def test_is_valid_url_valid_youtube():
     assert is_valid_url("https://www.youtube.com/watch?v=dQw4w9WgXcQ") is True
