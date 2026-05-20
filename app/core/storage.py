@@ -1,5 +1,4 @@
 import boto3
-import os
 from botocore.exceptions import ClientError
 from app.config import S3_ENDPOINT_URL, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME, S3_REGION, STORAGE_MODE
 
