@@ -14,6 +14,51 @@ def test_get_client_groq_provider():
         assert client == mock_openai.return_value
         assert config == PROVIDERS["groq"]
 
+@patch("transcriber.subprocess.run")
+def test_get_audio_duration_success(mock_run):
+    mock_run.return_value.stdout = '{"format": {"duration": "12.34"}}'
+
+    # We must import from transcriber because the test mocks it that way
+    from transcriber import get_audio_duration
+
+    duration = get_audio_duration("test.mp3")
+    assert duration == 12.34
+
+    mock_run.assert_called_once_with([
+        'ffprobe', '-v', 'quiet',
+        '-show_entries', 'format=duration',
+        '-of', 'json', 'test.mp3'
+    ], capture_output=True, text=True, check=True)
+
+@patch("transcriber.subprocess.run")
+def test_get_audio_duration_subprocess_error(mock_run):
+    import subprocess
+    mock_run.side_effect = subprocess.CalledProcessError(1, "ffprobe")
+
+    from transcriber import get_audio_duration
+
+    with pytest.raises(subprocess.CalledProcessError):
+        get_audio_duration("test.mp3")
+
+@patch("transcriber.subprocess.run")
+def test_get_audio_duration_missing_keys(mock_run):
+    mock_run.return_value.stdout = '{"format": {}}'
+
+    from transcriber import get_audio_duration
+
+    with pytest.raises(KeyError):
+        get_audio_duration("test.mp3")
+
+@patch("transcriber.subprocess.run")
+def test_get_audio_duration_invalid_json(mock_run):
+    mock_run.return_value.stdout = 'invalid json'
+
+    import json
+    from transcriber import get_audio_duration
+
+    with pytest.raises(json.JSONDecodeError):
+        get_audio_duration("test.mp3")
+
 def test_get_client_openai_provider():
     api_key = "test_openai_key"
     with patch("transcriber.OpenAI") as mock_openai:
