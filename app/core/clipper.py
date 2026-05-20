@@ -212,7 +212,34 @@ def create_clip(video_path, clip_info, words, output_path, clip_index,
     ass_escaped = ass_path.replace('\\', '/').replace(':', '\\:')
     src_w, src_h, _ = get_video_info(video_path)
 
-    # 3. Build Filter Complex
+    # 3. Build Filter Complex and Run FFmpeg Command
+    cmd = build_ffmpeg_command(
+        video_path=video_path,
+        start=start,
+        duration=duration,
+        tracking=tracking,
+        preset=preset,
+        ass_escaped=ass_escaped,
+        src_w=src_w,
+        src_h=src_h,
+        tw=tw,
+        th=th,
+        is_pro=is_pro,
+        output_path=output_path
+    )
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"FFmpeg failed: {result.stderr[-500:]}")
+
+    return output_path
+
+
+def build_ffmpeg_command(video_path, start, duration, tracking, preset, ass_escaped, src_w, src_h, tw, th, is_pro, output_path):
+    """
+    Build the FFmpeg command list for generating a clip.
+    Handles the filter complex generation based on the preset and tracking data.
+    """
     if tracking and preset in ("tiktok", "youtube_shorts"):
         # Dynamic Cropping based on face coordinates
         cw = tracking['crop_w']
@@ -263,9 +290,4 @@ def create_clip(video_path, clip_info, words, output_path, clip_index,
         '-y',
         output_path
     ]
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"FFmpeg failed: {result.stderr[-500:]}")
-
-    return output_path
+    return cmd
